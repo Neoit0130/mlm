@@ -61,7 +61,7 @@ export async function POST(req) {
 
   try {
     const allUsers = await UserModel.find().select("dscode name acnumber ifscCode bankName");
-
+    const successfulDsids = [];
     for (const user of allUsers) {
       const dsid = user.dscode;
 
@@ -71,6 +71,8 @@ export async function POST(req) {
 
       // ✅ Skip if total is 0 or less
       if (totalAmount <= 0) continue;
+      successfulDsids.push(dsid);
+
       const charges = totalAmount * 0.05;
       const payamount = totalAmount - charges;
       const closingEntry = new ClosingHistoryModel({
@@ -90,7 +92,10 @@ export async function POST(req) {
     }
 
     await PaymentHistoryModel.updateMany(
-      { pairstatus: false },
+      {
+        dsid: { $in: successfulDsids },
+        pairstatus: false,
+      },
       { $set: { pairstatus: true } }
     );
 
