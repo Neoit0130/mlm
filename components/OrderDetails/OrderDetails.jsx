@@ -62,6 +62,54 @@ export default function OrderDetails({ data }) {
             setIsLoading(false);
         }
     };
+
+    const handleStatusUpdatecancle = async (newStatus) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/order/update/${o}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: data._id,
+                    status: newStatus,
+                }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                setOrderStatus(newStatus);
+                await fetch("/api/PaymentHistory/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        dsid: data.dscode,
+                        amount: "0",
+                        sp: -Math.abs(data.totalsp),
+                        group: data.salegroup,
+                        orderno: data.orderNo,
+                        type: "order",
+                    }),
+                });
+                alert(`Order ${newStatus ? 'approved' : 'unapproved'} successfully!`);
+
+                window.location.reload();
+            } else {
+                throw new Error(result.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            alert('Failed to update order status. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+
     const handleDeliveryUpdate = async (newStatus) => {
         setIsLoading(true);
         try {
@@ -462,6 +510,19 @@ export default function OrderDetails({ data }) {
                         >
                             {isLoading && !deliveryStatus ? 'Updating...' : 'Mark as Delivered'}
                         </button>
+                    )}
+                    {orderStatus && (
+                        <>
+                            {!deliveryStatus && (
+                                <button
+
+                                    onClick={() => handleStatusUpdatecancle(false)}
+                                    className="flex-1 py-2 px-4 rounded text-white font-semibold transition duration-200 bg-red-600 hover:bg-red-700"
+                                >
+                                    Cancel Order
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
