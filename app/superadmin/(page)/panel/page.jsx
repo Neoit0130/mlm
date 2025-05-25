@@ -15,7 +15,7 @@ export default function Page() {
     });
 
     useEffect(() => {
-        axios.post('http://localhost:3000/api/panel')
+        axios.post('/api/panel')
             .then(response => {
                 setData(response.data);
             })
