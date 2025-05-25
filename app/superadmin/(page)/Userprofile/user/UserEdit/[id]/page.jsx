@@ -245,7 +245,7 @@ export default function Page() {
       }
 
       toast.success("User updated successfully!");
-      fetchUser();
+      window.location.reload();
       setFormData((prev) => ({
         ...prev,
         levelName: "",
@@ -267,11 +267,46 @@ export default function Page() {
   if (loading) return <p className="p-4">Loading...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
-  const filteredLevels = levels.filter(
-    (lvl) =>
-      parseInt(lvl.sao) <= parseInt(saosp || 0) &&
-      parseInt(lvl.sgo) <= parseInt(sgosp || 0)
-  );
+  const filteredLevels = (() => {
+    const sortedLevels = [...levels].sort((a, b) => parseInt(a.sao) - parseInt(b.sao));
+
+    let cumulativeSao = 0;
+    let cumulativeSgo = 0;
+    let userCurrentLevelIndex = -1;
+
+    // Find current user level index based on LevelDetails (assumes latest one is current)
+    const currentLevelName = userData?.LevelDetails?.slice(-1)[0]?.levelName;
+
+    // Identify index of current level in sortedLevels
+    sortedLevels.forEach((lvl, index) => {
+      if (lvl.level_name === currentLevelName) {
+        userCurrentLevelIndex = index;
+      }
+    });
+
+    // Calculate next level's index
+    const nextLevelIndex = userCurrentLevelIndex + 1;
+
+    let result = [];
+
+    for (let i = 0; i <= nextLevelIndex; i++) {
+      cumulativeSao += parseInt(sortedLevels[i]?.sao || 0);
+      cumulativeSgo += parseInt(sortedLevels[i]?.sgo || 0);
+    }
+
+    const nextLevel = sortedLevels[nextLevelIndex];
+
+    if (
+      nextLevel &&
+      parseInt(saosp || 0) >= cumulativeSao &&
+      parseInt(sgosp || 0) >= cumulativeSgo
+    ) {
+      result.push(nextLevel); // Only return next eligible level
+    }
+
+    return result;
+  })();
+
 
   return (
     <div className="p-4 max-w-xl mx-auto space-y-6">
