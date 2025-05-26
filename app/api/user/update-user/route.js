@@ -68,6 +68,7 @@ export async function PATCH(req) {
 
                 paymentHistories.push({
                     dsid: parent.dscode,
+                    dsgroup:parent.group,
                     amount: "0",
                     sp: activesp.toString(),
                     group: currentChildGroup,
